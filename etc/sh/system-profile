@@ -1,0 +1,75 @@
+# /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
+# and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+
+ENV_SRC="${ENV_SRC-}/etc/profile "
+
+# This is the first profile that should beloaded. Start by a requiring a logger.
+# If all goes well we start logging anything severe to syslog and really
+# out-of-order things on stderr.
+# But initially only if appropiate.
+#
+# TODO: become a bit more strict later about errors, for now these only show on stderr only if TTY.
+test -n "${PS1-}" && {
+
+  # If interactive, start loading all dynamic bits. We'll actually export LOG later.
+  # Fall-back to non-interactive if that fails.
+  . /etc/profile.d/uc-profile.sh &&
+    uc_log_init && LOG=uc_log
+
+} || {
+
+  # If non-interactive (or interactive setup fails), try static config and export working LOG now.
+  LOG=/etc/profile.d/uc-profile.sh
+  test -e "$LOG" || LOG=${UC_PROFILE_SELF-}
+  test ! -x "$LOG" && {
+    # Something amiss.. but nothing to do about it.
+    # Can't export LOG but can help other UC files to load
+    export UC_E_NOLOG=1
+    uc_log=$(which true)
+
+  } || {
+    # Load UC-profile config and set env, try log event
+    eval "$($LOG env)" && {
+      $LOG "info" ":sys-profile" "New shell logger started" "${!UC_*}"
+    } || {
+      # Something is wrong, don't even try to get a logger or anything else fancy anymore. Use what we have.
+      export UC_FAILLOG=1
+    }
+    export LOG
+    uc_log=$LOG
+  }
+}
+
+if [ "$(id -u)" -eq 0 ]; then
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+else
+  PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+fi
+export PATH
+
+if [ "${PS1-}" ]; then
+  if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
+    # The file bash.bashrc already sets the default PS1.
+    # PS1='\h:\w\$ '
+    if [ -f /etc/bash.bashrc ]; then
+      . /etc/bash.bashrc
+    fi
+  else
+    if [ "$(id -u)" -eq 0 ]; then
+      PS1='# '
+    else
+      PS1='$ '
+    fi
+  fi
+fi
+
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+
+$uc_log "info" ":/etc/profile" "Done sourcing" "S:$SHELL 0:$0 -:$-"

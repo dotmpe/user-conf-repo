@@ -1,0 +1,93 @@
+# ~/.profile: executed by the command interpreter for login shells.
+# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists.
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# These files are distributed in the bash-doc package.
+#
+# The system and user profile are always required for login sessions, so to keep
+# the shell accessible they should stay reasonably stable *and* be forgiving
+# to the countless parts that may be included.
+
+# 2019--2022  Berend van Berkum <dev@dotmpe.com>
+
+ENV_SRC="${ENV_SRC-}$HOME/.profile "
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+# This should be set by system-profile, but anyway attempt to be nice. But this,
+# unlike system-profile, fails if (user) setup is broken!
+test -n "${uc_log-}" || {
+  LOG=/etc/profile.d/uc-profile.sh
+  test -e "$LOG" || LOG=${UC_PROFILE_SELF:?This configuration requires Uc-profile}
+
+  eval "$($LOG env)" || export UC_FAILLOG=1
+}
+
+$uc_log debug ":user-profile" "Sourcing shell user profile..."
+
+test -n "${PS1-}" && {
+
+  # Do an interactive Uc-profile setup
+  $uc_log info ":user-profile" "Starting interactive shell user session"
+
+  # Include 'preload' group before Uc init
+  uc_profile_boot "$UC_TAB" preload || return
+
+  # Uc env and Ids
+  uc_profile_init mpe-login || return
+
+  # TODO: move to *after* the user-rc source, just like profile include RC after
+  # /etc/profile.d. Only keep preload/init phase above before that.
+
+  # Include all user-defined profile from Uc-Tab
+  uc_profile_boot "$UC_TAB" profile || { UC_PROFILE_BOOT=$?
+    # Keep going and warn if pending, otherwise fail
+    test $UC_PROFILE_BOOT -eq $E_UC_PENDING || return $UC_PROFILE_BOOT
+    $uc_log warn "" "Incomplete session (pending)"
+  }
+
+  ### Finally load bashrc
+  test -z "${BASH_VERSION-}" || {
+
+    test ! -f ~/.bashrc || {
+
+      uc_import ~/.bashrc
+    }
+  }
+
+  uc_profile_start
+
+  # The rest is default ~/profile as distributed on Bash-Linux systems, bail.
+  return
+
+} || {
+
+  # Do a non-interactive Uc-profile setup
+  $uc_log info ":user-profile" "Non-interactive shell user session"
+
+}
+
+
+$uc_log warning "" "Default user-profile executing" "~/.profile"
+
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
+# ex:ft=sh:

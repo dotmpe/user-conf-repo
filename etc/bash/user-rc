@@ -1,0 +1,55 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples [Debian]
+
+# 2006--2022  Berend van Berkum <dev@dotmpe.com>
+
+ENV_SRC="${ENV_SRC:-}~/.bashrc "
+
+# @ Inline: Shell:running-interactively
+# If not running interactively, don't do any dynamic stuff
+test -z "${PS1-}" && {
+  return
+}
+# ;
+
+
+### Load static helper env
+test -n "${uc_log-}" || {
+  . /etc/profile.d/uc-profile.sh || return
+  uc_log_init
+}
+
+
+### Run user-profile boot phases
+test -n "${UC_PROFILE_INIT:-}" || {
+
+  # Include 'preload' group before Uc init
+  uc_profile_boot "$UC_TAB" preload || return
+
+  # Uc env and Ids
+  uc_profile_init rc || return
+}
+
+$uc_log debug ":user-rc" "Sourcing..."
+
+uc_profile_boot "$UC_TAB" rc || return
+
+
+### Command aliases
+test "${UC_SH_ALIASES:-null}" != "null" || {
+  test ! -e ~/.alias || {
+    uc_source ~/.alias
+  }
+}
+
+# This is the last config line for interactive non-login sessions.
+# Start non-login session now or let profile handle start login session
+
+shopt -q login_shell &&
+  $uc_log info ":user-rc" "Load complete" "~/.bashrc" || {
+    $uc_log crit ":user-rc" "TODO: start session?" "~/.bashrc"
+    uc_profile_start
+  }
+
+# ex:ft=bash:

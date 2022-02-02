@@ -1,0 +1,51 @@
+
+SH notice "Provisioning $DIST_NAME $OS_NAME Host: $hostname.$domain"
+
+SH std_info "($DIST_VERSION_ID on $HARDWARE_NAME with $HARDWARE_PROCESSOR)"
+
+DIR ~/.local/{bin,etc,lib,share} \
+  ~/.ssh \
+  ~/project
+
+DIR \
+     /src/vendor/bitbucket.org \
+     /src/vendor/github.com
+
+
+SH std_info "Shell dotfiles (Bash, GIT)"
+
+# Generic profiles for all hosts
+COPY $UCONF/etc/sh/system-profile /etc/profile
+COPY $UCONF/etc/profile.d/uc-profile.sh /etc/profile.d/uc-profile.sh
+
+SYMLINK $UCONF/etc/sh/user-profile ~/.profile
+SH test -e $UCONF/etc/profile/${hostname}.tab && \
+  user_env=${hostname} || user_env=generic
+SYMLINK $UCONF/etc/profile/${user_env}.tab ~/.local/etc/profile.tab
+SYMLINK $UCONF/etc/profile.d/ ~/.local/etc/profile.d
+
+# Shells
+SYMLINK $UCONF/etc/sh/user-aliases ~/.alias
+COPY $UCONF/etc/bash/system-rc /etc/bash.bashrc
+SYMLINK $UCONF/etc/bash/user-rc ~/.bashrc
+# NOTE: presence of bash_profile overides ~/.profile for Bash sessions, I don't
+# care for it much at the moment.
+SH test ! -e ~/.bash_profile || { \
+  diff -bqr /etc/skel/.bash_profile ~/.bash_profile && \
+    rm ~/.bash_profile; }
+SYMLINK $UCONF/etc/bash/user-logout ~/.bash_logout
+
+# GIT
+SYMLINK $UCONF/etc/git/default-boilerplate.gitconfig ~/.gitconfig
+SYMLINK $UCONF/etc/git/ignore-global ~/.gitignore-global
+
+# Locale
+LINE /etc/locale.gen \
+  "en_GB.UTF-8 UTF-8" \
+  "en_US.UTF-8 UTF-8" \
+  "nl_NL.UTF-8 UTF-8"
+
+# XXX: cannot find where results are, otherwise would use ``test ... -nt``
+SH sudo locale-gen
+
+#

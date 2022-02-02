@@ -1,0 +1,57 @@
+#!/bin/sh
+
+alias cr='clear;reset'
+
+alias h=history
+
+# Generate bell signals
+alias beep='echo -en "\007"'
+alias noise='while true; do sleep 1 && printf '.' && beep; done'
+
+alias systemctl-status="systemctl status | head -n 2 | grep -Po '(?<=State: )[^ ]*')"
+
+# 'Shadow' vim, add some shell convenience
+
+# If any of the arguments exist but are not writable by the current user,
+# then prepend 'sudo' to the command with the proper HOME env. Otherwise
+# execute command directly.
+bin_shadow__sudo_nonwritable ()
+{
+  test -z "$(
+    for u in $@; do test -e "$u" || continue; test -w "$u" || echo nope; done
+  )" && {
+    command $shadow "$@"
+    return $?
+  } || {
+    sudo env HOME="$HOME" $shadow $bin_opts "$@"
+  }
+}
+
+vim () {
+  bin_opts="-u ~/.vimrc" \
+  shadow=vim bin_shadow__sudo_nonwritable "$@"; }
+
+vimdiff () {
+  bin_opts="-u ~/.vimrc" \
+  shadow=vimdiff bin_shadow__sudo_nonwritable "$@"; }
+
+# -- box shell-alias insert sentinel --
+
+test -z "${BASH-}" || {
+  test ! -e ~/.bash_aliases || {
+    ${uc_source:-"."} ~/.bash_aliases
+  }
+}
+
+
+# User-script aliases
+test ! -e ~/bin/.alias || ${uc_source:-"."} ~/bin/.alias
+
+# Composure helpers
+test ! -e ~/.local/composure/.alias || ${uc_source:-"."} ~/.local/composure/.alias
+
+#
+test -z "${USER_CONF_DEBUG-}" ||
+  $LOG "info" "" "Done sourcing" "~/.alias"
+
+# ex:ft=sh:
