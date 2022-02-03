@@ -32,7 +32,7 @@ SYMLINK $UCONF/etc/bash/user-rc ~/.bashrc
 # care for it much at the moment.
 SH test ! -e ~/.bash_profile || { \
   diff -bqr /etc/skel/.bash_profile ~/.bash_profile && \
-    rm ~/.bash_profile; }
+  rm ~/.bash_profile; }
 SYMLINK $UCONF/etc/bash/user-logout ~/.bash_logout
 
 # GIT
