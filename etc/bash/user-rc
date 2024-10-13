@@ -7,7 +7,11 @@
 ENV_SRC="${ENV_SRC:-}~/.bashrc "
 
 # @ Inline: Shell:running-interactively
-# If not running interactively, don't do any dynamic stuff
+# If not running interactively, then don't do any dynamic stuff either
+case $- in
+    *i*) ;;
+      *) return;;
+esac
 test -z "${PS1-}" && {
   return
 }
@@ -31,24 +35,29 @@ test -n "${UC_PROFILE_INIT:-}" || {
   uc_profile_init rc || return
 }
 
-$uc_log debug ":user-rc" "Sourcing..."
+$uc_log debug ":user-rc" "Booting user RC session" "$UC_TAB"
 
 uc_profile_boot "$UC_TAB" rc || return
 
 
 ### Command aliases
-test "${UC_SH_ALIASES:-null}" != "null" || {
+test -z "${UC_SH_ALIASES:-}" || {
   test ! -e ~/.alias || {
-    uc_source ~/.alias
+    ${uc_source:-"."} ~/.alias
   }
 }
 
 # This is the last config line for interactive non-login sessions.
 # Start non-login session now or let profile handle start login session
 
-shopt -q login_shell &&
-  $uc_log info ":user-rc" "Load complete" "~/.bashrc" || {
-    $uc_log crit ":user-rc" "TODO: start session?" "~/.bashrc"
+shopt -q login_shell && {
+    fnmatch "*/.profile *" "$ENV_SRC" ||
+      $uc_log error ":user-rc" "Login shell but no profile?!"
+      
+    $uc_log info ":user-rc" "Load complete" "~/.bashrc"
+
+  } || {
+
     uc_profile_start
   }
 
