@@ -2,7 +2,7 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples [Debian]
 
-# 2006--2022  Berend van Berkum <dev@dotmpe.com>
+# 2006--2024  Berend van Berkum <dev@dotmpe.com>
 
 ENV_SRC="${ENV_SRC:-}~/.bashrc "
 
@@ -41,8 +41,14 @@ uc_profile_boot "$UC_TAB" rc || return
 
 
 ### Command aliases
-test -z "${UC_SH_ALIASES:-}" || {
-  test ! -e ~/.alias || {
+test -n "${UC_SH_ALIASES:-}" && {
+  $uc_log info :user-rc \
+    "Shell aliases disabled per config" "Uc-Sh-Aliases:${UC_SH_ALIASES:?}"
+} || {
+  test ! -e ~/.alias && {
+    $uc_log debug :user-rc "No user aliases found" "~/.alias"
+  } || {
+    $uc_log debug :user-rc "Sourcing user aliases..." "~/.alias"
     ${uc_source:-"."} ~/.alias
   }
 }
@@ -58,6 +64,7 @@ shopt -q login_shell && {
 
   } || {
 
+    $uc_log debug :user-rc "Loaded, starting" "~/.bashrc"
     uc_profile_start
   }
 

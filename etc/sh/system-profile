@@ -3,12 +3,36 @@
 
 ENV_SRC="${ENV_SRC-}/etc/profile "
 
-# This is the first profile that should beloaded. Start by a requiring a logger.
-# If all goes well we start logging anything severe to syslog and really
-# out-of-order things on stderr.
+# I prefer os_path_add or even add_path but this is default (on Debian)
+append_path () # ~ <DIR> # PATH helper (does not export PATH!)
+{
+  : source "/etc/profile"
+  add_path "$@" || 
+    test 1 -eq $? || return $_
+}
+
+add_path ()
+{
+  : about "Simple PATH helper to append only new, unique instance"
+  : param "<DIR>" "Should be a directory, but this is not verified"
+  : extended "Using this helps keeping PATH cleaner, but it is intentionally a "
+  : extended "very simple implementation of this type of heuristic. "
+  : extended "For similar functions see uc and us sys.lib add-env-path"
+  : notes TODO "Really should write sys-wordv-add or something"
+  : notes XXX "This does not export PATH"
+  : notes : "Exactly the same implementation as shipped with Debian/Ubuntu"
+  : source "/etc/profile"
+  case ":$PATH:" in
+  ( *:"${1:?}":*) false
+    ;;
+  ( * )
+      PATH="${PATH:+$PATH:}${1:?}"
+  esac
+}
+test -z "${BASH-}" || export -f append_path add_path
+
+# Start with a requiring a logger. If all goes well we start logging anything severe to syslog and really out-of-order things on stderr.
 # But initially only if appropiate.
-#
-# TODO: become a bit more strict later about errors, for now these only show on stderr only if TTY.
 test -n "${PS1-}" && {
 
   # If interactive, start loading all dynamic bits. We'll actually export LOG later.
@@ -40,6 +64,7 @@ test -n "${PS1-}" && {
   }
 }
 
+# Reset PATH value
 if [ "$(id -u)" -eq 0 ]; then
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 else
@@ -47,6 +72,8 @@ else
 fi
 export PATH
 
+
+# Load shell settings
 if [ "${PS1-}" ]; then
   if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
     # The file bash.bashrc already sets the default PS1.
@@ -63,13 +90,28 @@ if [ "${PS1-}" ]; then
   fi
 fi
 
+# Load all system profile parts
 if [ -d /etc/profile.d ]; then
   for i in /etc/profile.d/*.sh; do
     if [ -r $i ]; then
-      . $i
+      . $i && {
+        : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
+        $LOG debug :source "$0: $_: source complete" "$i"
+      } || { s=$?
+        # TODO: rename incubator to US2,
+        #"${US_DEV:-false}" ||
+        #"${US_STRICT:-false}" ||
+        #"${DEBUG:-false}" || continue
+
+        : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
+        #echo "$0: $_: source '$i' returned E$? (ignored)" >&2
+        $LOG warn :source "$0: $_: source failed" "E$s:$i" $s
+      }
     fi
   done
-  unset i
+  unset i s
 fi
 
 $uc_log "info" ":/etc/profile" "Done sourcing" "S:$SHELL 0:$0 -:$-"
+
+# ex:ft=sh:

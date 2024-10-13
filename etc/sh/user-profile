@@ -1,14 +1,14 @@
 # ~/.profile: executed by the command interpreter for login shells.
-# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
-# exists.
-# see /usr/share/doc/bash/examples/startup-files for examples.
-# These files are distributed in the bash-doc package.
+#
+# Bash: # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists. See /usr/share/doc/bash/examples/startup-files for examples.
+# Debian: These files are distributed in the bash-doc package.
 #
 # The system and user profile are always required for login sessions, so to keep
 # the shell accessible they should stay reasonably stable *and* be forgiving
 # to the countless parts that may be included.
 
-# 2019--2022  Berend van Berkum <dev@dotmpe.com>
+# 2019--2024  Berend van Berkum <dev@dotmpe.com>
 
 ENV_SRC="${ENV_SRC-}$HOME/.profile "
 
@@ -51,10 +51,9 @@ test -n "${PS1-}" && {
   ### Finally load bashrc
   test -z "${BASH_VERSION-}" || {
 
-    test ! -f ~/.bashrc || {
+    [[ ! -f ~/.bashrc ]] ||
 
-      uc_import ~/.bashrc
-    }
+      uc_profile_import ~/.bashrc
   }
 
   uc_profile_start
@@ -70,14 +69,22 @@ test -n "${PS1-}" && {
 }
 
 
-$uc_log warning "" "Default user-profile executing" "~/.profile"
+test -z "${USER_CONF_DEBUG-}" ||
+  $uc_log warning :user-profile "Default user profile executing" "~/.profile"
 
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
-    if [ -f "$HOME/.bashrc" ]; then
-    . "$HOME/.bashrc"
+    # include .bashrc if it exists
+    if [ -e "$HOME/.bashrc" ]; then
+      $uc_log info :user-profile "Loading Bash settings..." "~/.bashrc"
+      #shellcheck source=etc/bash/user-rc
+      . "$HOME/.bashrc"
+    else
+      $uc_log debug :user-profile "No Bash settings found" "$BASH_VERSION"
     fi
+else
+    $uc_log notice :user-profile "Proceeding without Shell RC file"
 fi
 
 # set PATH so it includes user's private bin if it exists

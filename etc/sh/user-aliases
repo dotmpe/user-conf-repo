@@ -37,21 +37,23 @@ vimdiff () {
 
 # -- box shell-alias insert sentinel --
 
+## Bash aliases
 test -z "${BASH-}" || {
   test ! -e ~/.bash_aliases || {
+    [[ ! "${USER_CONF_DEBUG-}" ]] ||
+      ${uc_log:?} info :user-aliases "Sourcing" "~/.bash_aliases"
     ${uc_source:-"."} ~/.bash_aliases
   }
 }
 
 
-# User-script aliases
-test ! -e ~/bin/.alias || ${uc_source:-"."} ~/bin/.alias
+## User-script aliases
+test ! -e ~/bin/.alias || {
+  test -z "${USER_CONF_DEBUG-}" ||
+    ${uc_log:?} info :user-aliases "Sourcing" "~/bin/.alias"
+  ${uc_source:-"."} ~/bin/.alias
+}
 
-# Composure helpers
-test ! -e ~/.local/composure/.alias || ${uc_source:-"."} ~/.local/composure/.alias
 
-#
-test -z "${USER_CONF_DEBUG-}" ||
-  $LOG "info" "" "Done sourcing" "~/.alias"
-
-# ex:ft=sh:
+# Id: U-Conf.seed:etc/sh/user-alias                           ol:dlvl=2:  ex:ft=sh:
+test -z "${USER_CONF_DEBUG-}" || $LOG "info" "" "Done sourcing" "~/.alias"

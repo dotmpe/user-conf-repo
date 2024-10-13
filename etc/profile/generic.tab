@@ -4,6 +4,10 @@
 *_user  profile
 *_local profile
 
+# A few things expected to be in user env: uname, host(name), editor, etc.
+osrelease profile
+genericuser profile
+
 bash rc
 
 env_user profile
