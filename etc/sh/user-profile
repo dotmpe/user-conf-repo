@@ -100,4 +100,7 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+
+$uc_log info :user-profile "Ready" "~/.profile"
+
 # ex:ft=sh:

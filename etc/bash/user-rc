@@ -63,7 +63,7 @@ test -n "${UC_SH_ALIASES:-}" && {
 shopt -q login_shell && {
     fnmatch "*/.profile *" "$ENV_SRC" ||
       $uc_log error ":user-rc" "Login shell but no profile?!"
-      
+
     $uc_log info ":user-rc" "Load complete" "~/.bashrc"
 
   } || {
