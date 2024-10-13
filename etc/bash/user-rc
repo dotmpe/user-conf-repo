@@ -19,14 +19,18 @@ test -z "${PS1-}" && {
 
 
 ### Load static helper env
-test -n "${uc_log-}" || {
+[[ ! ${uc_log-} ]] || {
   . /etc/profile.d/uc-profile.sh || return
   uc_log_init
 }
 
 
+: "${UC_TAB:?"Expected UC_TAB setting (~/.bashrc)"}" &&
+[[ -s ${UC_TAB} ]] || : "${_:?"Expected file at UC_TAB=\"$UC_TAB\" (~/.bashrc)"}"
+
+
 ### Run user-profile boot phases
-test -n "${UC_PROFILE_INIT:-}" || {
+[[ ! ${UC_PROFILE_INIT-} ]] || {
 
   # Include 'preload' group before Uc init
   uc_profile_boot "$UC_TAB" preload || return

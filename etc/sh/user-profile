@@ -32,6 +32,9 @@ test -n "${PS1-}" && {
   # Do an interactive Uc-profile setup
   $uc_log info ":user-profile" "Starting interactive shell user session"
 
+  : "${UC_TAB:?"Expected UC_TAB setting (~/.profile)"}" &&
+  [[ -s ${UC_TAB} ]] || : "${_:?"Expected file at UC_TAB=\"$UC_TAB\" (~/.profile)"}"
+
   # Include 'preload' group before Uc init
   uc_profile_boot "$UC_TAB" preload || return
 
