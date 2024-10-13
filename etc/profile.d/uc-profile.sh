@@ -32,8 +32,12 @@ test "${UC_PROFILE_LOADED-}" = "0" || {
 
   test -d "${U_C-}" && {
     ## Restart from cache or require any working env
+
+    # Include log-routines and -entrypoint here (to use uc-profile.sh as command
+    # script handler as well)
     . "${U_C}/script/uc-profile.lib.sh" &&
-    uc_profile_reboot
+    uc_profile_reboot &&
+    . "${U_C}/tool/sh/log.sh"
 
     UC_PROFILE_LOADED=0 # Loaded
   } || {
