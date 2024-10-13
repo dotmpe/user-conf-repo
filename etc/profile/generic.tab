@@ -7,6 +7,7 @@
 # A few things expected to be in user env: uname, host(name), editor, etc.
 osrelease profile
 genericuser profile
+desktopuser profile
 
 bash rc
 
