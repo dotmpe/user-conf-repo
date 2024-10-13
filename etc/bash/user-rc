@@ -25,10 +25,6 @@ test -z "${PS1-}" && {
 }
 
 
-: "${UC_TAB:?"Expected UC_TAB setting (~/.bashrc)"}" &&
-[[ -s ${UC_TAB} ]] || : "${_:?"Expected file at UC_TAB=\"$UC_TAB\" (~/.bashrc)"}"
-
-
 ### Run user-profile boot phases
 [[ ! ${UC_PROFILE_INIT-} ]] || {
 

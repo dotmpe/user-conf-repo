@@ -13,8 +13,10 @@ test "${UC_PROFILE_LOADED-}" = "0" || {
   ## Static env for uc-profile (user)
   test ! -s $UC_PROFILE_D/_static.sh || . $UC_PROFILE_D/_static.sh
 
-  # U_C must be in _static.sh, or installed at one of these locations
+  # User-Conf must be in _static.sh, or installed at one of these locations
   test -d "${U_C-}" || {
+    [[ ! ${U_C-} ]] || unset U_C
+
     # If U-C is not configured, do a very conservative scan, some at HOME and
     # one at ${PREFIX:=/usr}
     : "${PREFIX:=/usr}"
@@ -29,18 +31,9 @@ test "${UC_PROFILE_LOADED-}" = "0" || {
   }
 
   test -d "${U_C-}" && {
-    ## Load everything to boot user uc profile
-
-    # Current user-conf repo location
-    true "${UCONF:="$HOME/.conf"}"
-
-    # All of the functions in uc-profile...
-    sh_fun () { declare -F "${1:?}" > /dev/null; }
+    ## Restart from cache or require any working env
     . "${U_C}/script/uc-profile.lib.sh" &&
-    uc_profile_boot_parts &&
-
-    # Include log-routines and -entrypoint
-    . "${U_C}/tool/sh/log.sh" &&
+    uc_profile_reboot
 
     UC_PROFILE_LOADED=0 # Loaded
   } || {
